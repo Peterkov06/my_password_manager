@@ -42,10 +42,60 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text('Hello There!')
+              AppCard(),
             ],
           ),
-      )
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {AppCard();},
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       );
   }
 }
+
+class AppCard extends StatefulWidget {
+  const AppCard({super.key});
+
+  @override
+  State<AppCard> createState() => _AppCardState();
+}
+
+class _AppCardState extends State<AppCard> {
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      color: Colors.green,
+      child: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text('App Pass'),
+            ),
+            Row(
+              children: [
+                Flexible(
+                  child: TextField(
+                  decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
+                ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.remove_red_eye),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.copy),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
