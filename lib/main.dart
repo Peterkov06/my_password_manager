@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ServiceCard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,6 +30,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  List<ServiceCard> dynamicCards = [];
+
+  addCard()
+  {
+    dynamicCards.add(new ServiceCard(currentPassword: 'jani', serviceName: 'youtube', userName: 'none'));
+
+    setState(() { });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,17 +46,44 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(10.0),
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              AppCard(),
-            ],
-          ),
+      body: ListView.builder(
+        itemCount: dynamicCards.length,
+        itemBuilder: (context, index) {
+          return Card(
+            color: Colors.green,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  ListTile(
+                    title: Text(dynamicCards[index].serviceName),
+                    subtitle: Text(dynamicCards[index].userName),
+                  ),
+                  const Row(
+                  children: [
+                    Flexible(
+                      child: TextField(
+                      decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
+                    ),
+                    ),
+                    TextButton(
+                      child: Icon(Icons.remove_red_eye),
+                      onPressed: null,
+                      ),
+                    TextButton(
+                      child: Icon(Icons.copy),
+                      onPressed: null,
+                      ),
+                  ],
+                ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {AppCard();},
+        onPressed: addCard,
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -74,6 +110,7 @@ class _AppCardState extends State<AppCard> {
           children: [
             ListTile(
               title: Text('App Pass'),
+              subtitle: Text('Account'),
             ),
             Row(
               children: [
