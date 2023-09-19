@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'ServiceCard.dart';
 
 void main() {
@@ -34,7 +35,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   addCard()
   {
-    dynamicCards.add(new ServiceCard(currentPassword: 'jani', serviceName: 'youtube', userName: 'none'));
+
+    dynamicCards.add(ServiceCard(currentPassword: 'jani', serviceName: 'youtube', userName: 'none'));
 
     setState(() { });
   }
@@ -49,41 +51,84 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView.builder(
         itemCount: dynamicCards.length,
         itemBuilder: (context, index) {
-          return Card(
-            color: Colors.green,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: Text(dynamicCards[index].serviceName),
-                    subtitle: Text(dynamicCards[index].userName),
-                  ),
-                  const Row(
+          return Slidable(
+            direction: Axis.horizontal,
+            endActionPane: const ActionPane(
+              motion: ScrollMotion(), 
+              children:[ SlidableAction(
+                onPressed: null,
+                backgroundColor: Color(0xFFFE4A49),
+                foregroundColor: Colors.white,
+                icon: Icons.delete,
+                label: 'Delete',
+              ),]
+      
+      ),
+            child: Card(
+              color: Colors.green,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: TextField(
-                      decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
-                    ),
-                    ),
-                    TextButton(
-                      child: Icon(Icons.remove_red_eye),
-                      onPressed: null,
+                    Text(dynamicCards[index].serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
+                    Text(dynamicCards[index].userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+                    const Row(
+                    children: [
+                      Flexible(
+                        child: TextField(
+                        decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
                       ),
-                    TextButton(
-                      child: Icon(Icons.copy),
-                      onPressed: null,
                       ),
+                      TextButton(
+                        child: Icon(Icons.remove_red_eye),
+                        onPressed: null,
+                        ),
+                      TextButton(
+                        child: Icon(Icons.copy),
+                        onPressed: null,
+                        ),
+                    ],
+                  ),
                   ],
                 ),
-                ],
               ),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: addCard,
+        onPressed: () {
+          showDialog(
+            context: context, 
+            builder: (context) => AlertDialog(
+            title: Text('Add new service'),
+            content: const Form(
+              child: 
+              Column(children: [
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Flexible(
+                    child: TextField(
+                    decoration: InputDecoration(hintText: 'Service name', border: OutlineInputBorder()),
+                  ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Flexible(
+                    child: TextField(
+                    decoration: InputDecoration(hintText: 'Password', border: OutlineInputBorder()),
+                  ),
+                  ),
+                ),
+            ],)),
+            actions: [
+              ElevatedButton(onPressed: () { Navigator.pop(context, true); addCard();}, child: const Text('Save'),)
+            ],
+    ));
+
+        },
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
