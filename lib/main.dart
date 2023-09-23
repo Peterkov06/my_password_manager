@@ -1,5 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:path_provider/path_provider.dart';
 import 'ServiceCard.dart';
 
 void main() {
@@ -12,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Password Manager',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
@@ -32,13 +37,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<ServiceCard> dynamicCards = [];
+  final currentNewService = TextEditingController();
+  final currentNewUsername = TextEditingController();
+  final currentNewPassword = TextEditingController();
 
   addCard()
   {
 
-    dynamicCards.add(ServiceCard(currentPassword: 'jani', serviceName: 'youtube', userName: 'none'));
+    dynamicCards.add(ServiceCard(currentPassword: currentNewPassword.text, serviceName: currentNewService.text, userName: currentNewUsername.text));
+    currentNewPassword.clear();
+    currentNewService.clear();
+    currentNewUsername.clear();
 
     setState(() { });
+  }
+
+  deleteCard(int ind)
+  {
+    dynamicCards.removeAt(ind);
+    setState(() {});
   }
 
   @override
@@ -53,47 +70,18 @@ class _MyHomePageState extends State<MyHomePage> {
         itemBuilder: (context, index) {
           return Slidable(
             direction: Axis.horizontal,
-            endActionPane: const ActionPane(
-              motion: ScrollMotion(), 
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(), 
               children:[ SlidableAction(
-                onPressed: null,
-                backgroundColor: Color(0xFFFE4A49),
+                onPressed: (context) {deleteCard(index);},
+                backgroundColor: const Color(0xFFFE4A49),
                 foregroundColor: Colors.white,
                 icon: Icons.delete,
                 label: 'Delete',
               ),]
       
       ),
-            child: Card(
-              color: Colors.green,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(dynamicCards[index].serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
-                    Text(dynamicCards[index].userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
-                    const Row(
-                    children: [
-                      Flexible(
-                        child: TextField(
-                        decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
-                      ),
-                      ),
-                      TextButton(
-                        child: Icon(Icons.remove_red_eye),
-                        onPressed: null,
-                        ),
-                      TextButton(
-                        child: Icon(Icons.copy),
-                        onPressed: null,
-                        ),
-                    ],
-                  ),
-                  ],
-                ),
-              ),
-            ),
+            child: CardWidget(dynamicCards: dynamicCards, index: index,),
           );
         },
       ),
@@ -102,24 +90,44 @@ class _MyHomePageState extends State<MyHomePage> {
           showDialog(
             context: context, 
             builder: (context) => AlertDialog(
-            title: Text('Add new service'),
-            content: const Form(
+            title: const Text('Add new service'),
+            content: Form(
               child: 
               Column(children: [
                 Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Flexible(
-                    child: TextField(
-                    decoration: InputDecoration(hintText: 'Service name', border: OutlineInputBorder()),
-                  ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewService,
+                      decoration: const InputDecoration(hintText: 'Service name', border: OutlineInputBorder()),
+                    ),
+                    ),]
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Flexible(
-                    child: TextField(
-                    decoration: InputDecoration(hintText: 'Password', border: OutlineInputBorder()),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewUsername,
+                      decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
+                    ),
+                    ),]
                   ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewPassword,
+                      decoration: const InputDecoration(hintText: 'Password', border: OutlineInputBorder()),
+                    ),
+                    ),]
                   ),
                 ),
             ],)),
@@ -133,6 +141,77 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       );
+  }
+}
+
+class CardWidget extends StatefulWidget {
+  const CardWidget({
+    super.key,
+    required this.dynamicCards, this.index,
+  });
+
+  final List<ServiceCard> dynamicCards;
+  final index;
+
+  @override
+  State<CardWidget> createState() => _CardWidgetState();
+}
+
+class _CardWidgetState extends State<CardWidget> {
+  bool isVisible = false;
+  final thisPassword = TextEditingController();
+
+  @override
+  void initState() {
+    thisPassword.text = widget.dynamicCards[widget.index].currentPassword;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.green,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.dynamicCards[widget.index].serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
+            Text(widget.dynamicCards[widget.index].userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+             Row(
+            children: [
+              Flexible(
+                child: TextField(
+                  readOnly: true,
+                  obscureText: !isVisible,
+                  controller: thisPassword,
+                decoration: const InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
+              ),
+              ),
+              TextButton(
+                onPressed: () {
+                  isVisible = !isVisible; 
+                  setState(() {
+                });},
+                child: const Icon(Icons.remove_red_eye),
+                ),
+              TextButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: thisPassword.text));
+                  const snackBar = SnackBar(
+                    content: Text('Copied password!'),
+                    duration: Duration(seconds: 1),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  },
+                child: const Icon(Icons.copy),
+                ),
+            ],
+          ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
