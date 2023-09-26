@@ -27,6 +27,34 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class FileManager
+{
+  Future<String> get _localPath async {
+  final directory = await getApplicationDocumentsDirectory();
+
+  return directory.path;
+  }
+
+  Future<File> get _file async {
+    final path = await _localPath;
+    return File('$path/datas.txt');
+  }
+
+  Future<File> writeToFile(String data)
+  async {
+    final datasFile = await _file;
+    return datasFile.writeAsString(data);
+  }
+
+  Future<String> readFile() async
+  {
+    final file = await _file;
+
+    final readData = await file.readAsString();
+    return(readData);
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
