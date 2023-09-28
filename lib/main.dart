@@ -1,13 +1,24 @@
-import 'dart:async';
-import 'dart:io';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'ServiceCard.dart';
+import 'databaseBoxes.dart';
 
-void main() {
+void main() async{
+  await Hive.initFlutter();
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+  var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
+  if (!containsEncryptionKey) {
+    var key = Hive.generateSecureKey();
+    await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
+  }
+  final key = await secureStorage.read(key: 'encryptionKey');
+  var encryptionKey = base64Url.decode(key.toString());
+  Hive.registerAdapter(ServiceCardAdapter());
+  database = await Hive.openBox<ServiceCard>('serviceCard', encryptionCipher: HiveAesCipher(encryptionKey));
   runApp(const MyApp());
 }
 
@@ -27,34 +38,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class FileManager
-{
-  Future<String> get _localPath async {
-  final directory = await getApplicationDocumentsDirectory();
-
-  return directory.path;
-  }
-
-  Future<File> get _file async {
-    final path = await _localPath;
-    return File('$path/datas.txt');
-  }
-
-  Future<File> writeToFile(String data)
-  async {
-    final datasFile = await _file;
-    return datasFile.writeAsString(data);
-  }
-
-  Future<String> readFile() async
-  {
-    final file = await _file;
-
-    final readData = await file.readAsString();
-    return(readData);
-  }
-}
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
@@ -64,26 +47,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<ServiceCard> dynamicCards = [];
-  final currentNewService = TextEditingController();
-  final currentNewUsername = TextEditingController();
-  final currentNewPassword = TextEditingController();
+  var currentNewService = TextEditingController();
+  var currentNewUsername = TextEditingController();
+  var currentNewPassword = TextEditingController();
 
-  addCard()
+  addCard(int newIndex)
   {
-
-    dynamicCards.add(ServiceCard(currentPassword: currentNewPassword.text, serviceName: currentNewService.text, userName: currentNewUsername.text));
-    currentNewPassword.clear();
-    currentNewService.clear();
-    currentNewUsername.clear();
-
-    setState(() { });
+      
+    setState(() { 
+      database.put(newIndex, ServiceCard(serviceName: currentNewService.text, userName: currentNewUsername.text, currentPassword: currentNewPassword.text));
+      currentNewPassword.clear();
+      currentNewService.clear();
+      currentNewUsername.clear();
+    });
   }
 
   deleteCard(int ind)
   {
-    dynamicCards.removeAt(ind);
-    setState(() {});
+    setState(() {database.deleteAt(ind);});
   }
 
   @override
@@ -94,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: ListView.builder(
-        itemCount: dynamicCards.length,
+        itemCount: database.length,
         itemBuilder: (context, index) {
           return Slidable(
             direction: Axis.horizontal,
@@ -109,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),]
       
       ),
-            child: CardWidget(dynamicCards: dynamicCards, index: index,),
+            child: CardWidget(index: index),
           );
         },
       ),
@@ -160,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
             ],)),
             actions: [
-              ElevatedButton(onPressed: () { Navigator.pop(context, true); addCard();}, child: const Text('Save'),)
+              ElevatedButton(onPressed: () { Navigator.pop(context, true); addCard(database.length);}, child: const Text('Save'),)
             ],
     ));
 
@@ -175,11 +156,9 @@ class _MyHomePageState extends State<MyHomePage> {
 class CardWidget extends StatefulWidget {
   const CardWidget({
     super.key,
-    required this.dynamicCards, this.index,
+    required this.index,
   });
-
-  final List<ServiceCard> dynamicCards;
-  final index;
+  final int index;
 
   @override
   State<CardWidget> createState() => _CardWidgetState();
@@ -188,10 +167,11 @@ class CardWidget extends StatefulWidget {
 class _CardWidgetState extends State<CardWidget> {
   bool isVisible = false;
   final thisPassword = TextEditingController();
+  late ServiceCard currCard;
 
   @override
   void initState() {
-    thisPassword.text = widget.dynamicCards[widget.index].currentPassword;
+    currCard = database.getAt(widget.index);
     super.initState();
   }
 
@@ -204,15 +184,15 @@ class _CardWidgetState extends State<CardWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.dynamicCards[widget.index].serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
-            Text(widget.dynamicCards[widget.index].userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+            Text(currCard.serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
+            Text(currCard.userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
              Row(
             children: [
               Flexible(
                 child: TextField(
                   readOnly: true,
                   obscureText: !isVisible,
-                  controller: thisPassword,
+                  controller: TextEditingController(text: currCard.currentPassword),
                 decoration: const InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
               ),
               ),
