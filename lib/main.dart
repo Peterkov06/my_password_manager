@@ -6,24 +6,30 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'ServiceCard.dart';
 import 'databaseBoxes.dart';
+import 'loginScreen.dart';
 
 void main() async{
   await Hive.initFlutter();
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-  var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
-  if (!containsEncryptionKey) {
-    var key = Hive.generateSecureKey();
-    await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+
+  runApp(MyApp(secureStorage: secureStorage,));
+  if (await secureStorage.containsKey(key: 'loginPass'))
+  {
+    var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
+    if (!containsEncryptionKey) {
+      var key = Hive.generateSecureKey();
+      await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
+    }
+    final key = await secureStorage.read(key: 'encryptionKey');
+    var encryptionKey = base64Url.decode(key.toString());
+    Hive.registerAdapter(ServiceCardAdapter());
+    database = await Hive.openBox<ServiceCard>('serviceCard', encryptionCipher: HiveAesCipher(encryptionKey));
   }
-  final key = await secureStorage.read(key: 'encryptionKey');
-  var encryptionKey = base64Url.decode(key.toString());
-  Hive.registerAdapter(ServiceCardAdapter());
-  database = await Hive.openBox<ServiceCard>('serviceCard', encryptionCipher: HiveAesCipher(encryptionKey));
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.secureStorage});
+  final secureStorage;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +39,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Password Manager'),
+      home: /*MyHomePage(title: 'Password Manager')*/ LoginScreen(secureStorage: secureStorage,),
     );
   }
 }
