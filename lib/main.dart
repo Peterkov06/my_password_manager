@@ -10,26 +10,17 @@ import 'loginScreen.dart';
 
 void main() async{
   await Hive.initFlutter();
-  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  const FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  Hive.registerAdapter(ServiceCardAdapter());
+  database = await Hive.openBox('');
 
-  runApp(MyApp(secureStorage: secureStorage,));
-  if (await secureStorage.containsKey(key: 'loginPass'))
-  {
-    var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
-    if (!containsEncryptionKey) {
-      var key = Hive.generateSecureKey();
-      await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
-    }
-    final key = await secureStorage.read(key: 'encryptionKey');
-    var encryptionKey = base64Url.decode(key.toString());
-    Hive.registerAdapter(ServiceCardAdapter());
-    database = await Hive.openBox<ServiceCard>('serviceCard', encryptionCipher: HiveAesCipher(encryptionKey));
-  }
+  runApp(MyApp(secureStorage: secureStorage, hasLoginPass: await secureStorage.containsKey(key: 'loginPass'),));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, this.secureStorage});
-  final secureStorage;
+  const MyApp({super.key, required this.secureStorage, required this.hasLoginPass});
+  final FlutterSecureStorage secureStorage;
+  final bool hasLoginPass;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +30,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: /*MyHomePage(title: 'Password Manager')*/ LoginScreen(secureStorage: secureStorage,),
+      home: LoginScreen(secureStorage: secureStorage, hasPassword: hasLoginPass),
     );
   }
 }
@@ -56,8 +47,29 @@ class _MyHomePageState extends State<MyHomePage> {
   var currentNewService = TextEditingController();
   var currentNewUsername = TextEditingController();
   var currentNewPassword = TextEditingController();
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  addCard(int newIndex)
+  @override
+  void initState() {
+    openBox();
+    super.initState();
+  }
+
+  Future openBox()
+  async {
+    var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
+    if (!containsEncryptionKey) {
+      var key = Hive.generateSecureKey();
+      await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
+    }
+    final key = await secureStorage.read(key: 'encryptionKey');
+    var encryptionKey = base64Url.decode(key.toString());
+    database.close();
+    database = await Hive.openBox<ServiceCard>('serviceCard', encryptionCipher: HiveAesCipher(encryptionKey));
+    setState(() {});
+  }
+
+  void addCard(int newIndex)
   {
       
     setState(() { 
@@ -68,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  deleteCard(int ind)
+  void deleteCard(int ind)
   {
     setState(() {database.deleteAt(ind);});
   }
