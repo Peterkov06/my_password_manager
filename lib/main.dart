@@ -10,7 +10,8 @@ import 'databaseBoxes.dart';
 import 'loginScreen.dart';
 
 void main() async{
-  await Hive.initFlutter();
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter('database');
    AndroidOptions _getAndroidOptions() => const AndroidOptions(
         encryptedSharedPreferences: true,
       );
@@ -40,18 +41,27 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.title, required this.secureStorage});
   final String title;
+  final secureStorage;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState(secureStorage);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   var currentNewService = TextEditingController();
   var currentNewUsername = TextEditingController();
   var currentNewPassword = TextEditingController();
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+  final FlutterSecureStorage secureStorage;
+
+  _MyHomePageState(this.secureStorage);
+
+  @override
+  void deactivate() {
+    database.close();
+    super.deactivate();
+  }
 
   @override
   void initState() {
@@ -62,6 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future openBox()
   async {
     var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
+    print(containsEncryptionKey);
     if (!containsEncryptionKey) {
       var key = Hive.generateSecureKey();
       await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));

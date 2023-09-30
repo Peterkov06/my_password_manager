@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void toHomePage(BuildContext cont)
   {
-    Navigator.pushReplacement(cont, MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Password manager',)));
+    Navigator.pushReplacement(cont, MaterialPageRoute(builder: (context) => MyHomePage(title: 'Password manager', secureStorage: widget.secureStorage,)));
   }
 
 
