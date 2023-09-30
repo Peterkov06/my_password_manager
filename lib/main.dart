@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,7 +11,10 @@ import 'loginScreen.dart';
 
 void main() async{
   await Hive.initFlutter();
-  const FlutterSecureStorage secureStorage = FlutterSecureStorage();
+   AndroidOptions _getAndroidOptions() => const AndroidOptions(
+        encryptedSharedPreferences: true,
+      );
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions());
   Hive.registerAdapter(ServiceCardAdapter());
   database = await Hive.openBox('');
 
@@ -71,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void addCard(int newIndex)
   {
-      
     setState(() { 
       database.put(newIndex, ServiceCard(serviceName: currentNewService.text, userName: currentNewUsername.text, currentPassword: currentNewPassword.text));
       currentNewPassword.clear();
@@ -81,9 +84,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void deleteCard(int ind)
-  {
-    setState(() {database.deleteAt(ind);});
-  }
+    {
+      int cycle = database.length - 1;
+      for (var i = ind; i < cycle; i++) {
+        ServiceCard copyCard = database.get(i + 1);
+        database.delete(i);
+        database.put(i, copyCard);
+      }
+      database.delete(cycle);
+      setState(() {
+        
+      });
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -95,21 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView.builder(
         itemCount: database.length,
         itemBuilder: (context, index) {
-          return Slidable(
-            direction: Axis.horizontal,
-            endActionPane: ActionPane(
-              motion: const ScrollMotion(), 
-              children:[ SlidableAction(
-                onPressed: (context) {deleteCard(index);},
-                backgroundColor: const Color(0xFFFE4A49),
-                foregroundColor: Colors.white,
-                icon: Icons.delete,
-                label: 'Delete',
-              ),]
-      
-      ),
-            child: CardWidget(index: index),
-          );
+          return CardWidget(index: index, parentDeleteCard: deleteCard,);
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -157,11 +155,58 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),]
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: Center(
+                        child: TextButton(
+                          child: const Text('Generate password'),
+                          onPressed: () {
+                            const String letters_lower = 'abcdefghijklmnopqrstuvwxyz';
+                            const String letters_Upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                            const String numbers = '123456789';
+                            const String specials = "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/";
+                            int length = Random().nextInt(3) + 15;
+                            String genPass = '';
+                            for (var i = 0; i < length; i++) {
+                              int type = Random().nextInt(3);
+                              switch (type) {
+                                case 0:
+                                  int loUp = Random().nextInt(2);
+                                  switch (loUp)
+                                  {
+                                    case 0:
+                                      genPass += letters_lower[Random().nextInt(letters_lower.length)];
+                                      break;
+                                    case 1:
+                                      genPass += letters_Upper[Random().nextInt(letters_Upper.length)];
+                                      break;
+                                  }
+                                  break;
+                                case 1:
+                                  genPass += numbers[Random().nextInt(numbers.length)];
+                                  break;
+                                case 2:
+                                  genPass += specials[Random().nextInt(specials.length)];
+                                  break;
+                              }
+                            }
+                            currentNewPassword.text = genPass;
+                            setState(() {  });
+                          },
+                          ),
+                      )
+                    ),]
+                  ),
+                ),
             ],)),
             actions: [
               ElevatedButton(onPressed: () { Navigator.pop(context, true); addCard(database.length);}, child: const Text('Save'),)
             ],
-    ));
+    )).then((value) => currentNewPassword.clear())
+    ;
 
         },
         child: const Icon(Icons.add),
@@ -174,9 +219,10 @@ class _MyHomePageState extends State<MyHomePage> {
 class CardWidget extends StatefulWidget {
   const CardWidget({
     super.key,
-    required this.index,
+    required this.index, required this.parentDeleteCard,
   });
   final int index;
+  final Function parentDeleteCard;
 
   @override
   State<CardWidget> createState() => _CardWidgetState();
@@ -187,15 +233,34 @@ class _CardWidgetState extends State<CardWidget> {
   final thisPassword = TextEditingController();
   late ServiceCard currCard;
 
+    @override
+  void didUpdateWidget(covariant CardWidget oldWidget) {
+    currCard = database.get(widget.index);
+    super.didUpdateWidget(oldWidget);
+  }
+
   @override
   void initState() {
-    currCard = database.getAt(widget.index);
     super.initState();
+    currCard = database.get(widget.index);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Slidable(
+      direction: Axis.horizontal,
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(), 
+        children:[ SlidableAction(
+          onPressed: (context) {
+            widget.parentDeleteCard(widget.index);
+          },
+          backgroundColor: const Color(0xFFFE4A49),
+          foregroundColor: Colors.white,
+          icon: Icons.delete,
+          label: 'Delete',
+        ),]),
+      child: Card(
       color: Colors.green,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -237,52 +302,8 @@ class _CardWidgetState extends State<CardWidget> {
           ],
         ),
       ),
-    );
+    ),
+          );
+     
   }
 }
-
-class AppCard extends StatefulWidget {
-  const AppCard({super.key});
-
-  @override
-  State<AppCard> createState() => _AppCardState();
-}
-
-class _AppCardState extends State<AppCard> {
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      color: Colors.green,
-      child: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            ListTile(
-              title: Text('App Pass'),
-              subtitle: Text('Account'),
-            ),
-            Row(
-              children: [
-                Flexible(
-                  child: TextField(
-                  decoration: InputDecoration(hintText: 'Pass', border: OutlineInputBorder()),
-                ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.remove_red_eye),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.copy),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
