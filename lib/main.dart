@@ -72,7 +72,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Future openBox()
   async {
     var containsEncryptionKey = await secureStorage.containsKey(key: 'encryptionKey');
-    print(containsEncryptionKey);
     if (!containsEncryptionKey) {
       var key = Hive.generateSecureKey();
       await secureStorage.write(key: 'encryptionKey', value: base64UrlEncode(key));
@@ -95,18 +94,117 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void deleteCard(int ind)
-    {
-      int cycle = database.length - 1;
-      for (var i = ind; i < cycle; i++) {
-        ServiceCard copyCard = database.get(i + 1);
-        database.delete(i);
-        database.put(i, copyCard);
-      }
-      database.delete(cycle);
-      setState(() {
-        
-      });
+  {
+    int cycle = database.length - 1;
+    for (var i = ind; i < cycle; i++) {
+      ServiceCard copyCard = database.get(i + 1);
+      database.delete(i);
+      database.put(i, copyCard);
     }
+    database.delete(cycle);
+    setState(() {
+      
+    });
+  }
+
+  void modifyCard()
+  {
+    showDialog(
+            context: context, 
+            builder: (context) => AlertDialog(
+            title: const Text('Add new service'),
+            content: Form(
+              child: 
+              Column(children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewService,
+                      decoration: const InputDecoration(hintText: 'Service name', border: OutlineInputBorder()),
+                    ),
+                    ),]
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewUsername,
+                      decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
+                    ),
+                    ),]
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: TextField(
+                        controller: currentNewPassword,
+                      decoration: const InputDecoration(hintText: 'Password', border: OutlineInputBorder()),
+                    ),
+                    ),]
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Flex(
+                    direction: Axis.horizontal,
+                    children: [Flexible(
+                      child: Center(
+                        child: TextButton(
+                          child: const Text('Generate password'),
+                          onPressed: () {
+                            const String letters_lower = 'abcdefghijklmnopqrstuvwxyz';
+                            const String letters_Upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                            const String numbers = '123456789';
+                            const String specials = "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/";
+                            int length = Random().nextInt(3) + 15;
+                            String genPass = '';
+                            for (var i = 0; i < length; i++) {
+                              int type = Random().nextInt(3);
+                              switch (type) {
+                                case 0:
+                                  int loUp = Random().nextInt(2);
+                                  switch (loUp)
+                                  {
+                                    case 0:
+                                      genPass += letters_lower[Random().nextInt(letters_lower.length)];
+                                      break;
+                                    case 1:
+                                      genPass += letters_Upper[Random().nextInt(letters_Upper.length)];
+                                      break;
+                                  }
+                                  break;
+                                case 1:
+                                  genPass += numbers[Random().nextInt(numbers.length)];
+                                  break;
+                                case 2:
+                                  genPass += specials[Random().nextInt(specials.length)];
+                                  break;
+                              }
+                            }
+                            currentNewPassword.text = genPass;
+                            setState(() {  });
+                          },
+                          ),
+                      )
+                    ),]
+                  ),
+                ),
+            ],)),
+            actions: [
+              ElevatedButton(onPressed: () { Navigator.pop(context, true); addCard(database.length);}, child: const Text('Save'),)
+            ],
+    )).then((value) => currentNewPassword.clear())
+    ;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: ListView.builder(
         itemCount: database.length,
         itemBuilder: (context, index) {
-          return CardWidget(index: index, parentDeleteCard: deleteCard,);
+          return CardWidget(index: index, parentDeleteCard: deleteCard, modifyCard: modifyCard,);
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -230,10 +328,11 @@ class _MyHomePageState extends State<MyHomePage> {
 class CardWidget extends StatefulWidget {
   const CardWidget({
     super.key,
-    required this.index, required this.parentDeleteCard,
+    required this.index, required this.parentDeleteCard, required this.modifyCard
   });
   final int index;
   final Function parentDeleteCard;
+  final Function modifyCard;
 
   @override
   State<CardWidget> createState() => _CardWidgetState();
@@ -278,8 +377,23 @@ class _CardWidgetState extends State<CardWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(currCard.serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
-            Text(currCard.userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(currCard.serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
+                      Text(currCard.userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+                    ],
+                  ),
+                ),
+                TextButton(onPressed: () {
+                    widget.modifyCard();
+                  }, 
+                  child: const Icon(Icons.edit, )),
+              ],
+            ),
              Row(
             children: [
               Flexible(
