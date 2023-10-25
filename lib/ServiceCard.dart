@@ -15,7 +15,7 @@ class ServiceCard
   final String currentPassword;
 
   @HiveField(3)
-  List<String> previousPass = [];
+  final List<String> previousPass;
 
-  ServiceCard({required this.serviceName, required this.userName, required this.currentPassword});
+  ServiceCard({required this.serviceName, required this.userName, required this.currentPassword, required this.previousPass});
 }

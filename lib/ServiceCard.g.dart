@@ -20,7 +20,8 @@ class ServiceCardAdapter extends TypeAdapter<ServiceCard> {
       serviceName: fields[0] as String,
       userName: fields[1] as String,
       currentPassword: fields[2] as String,
-    )..previousPass = (fields[3] as List).cast<String>();
+      previousPass: (fields[3] as List).cast<String>(),
+    );
   }
 
   @override
