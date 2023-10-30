@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:my_password_manager/AppThemes.dart';
+import 'package:provider/provider.dart';
 import 'ServiceCard.dart';
 import 'databaseBoxes.dart';
 import 'loginScreen.dart';
@@ -27,15 +28,22 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key, required this.secureStorage, required this.hasLoginPass});
   final FlutterSecureStorage secureStorage;
   final bool hasLoginPass;
+  final bool isDarkTheme = false;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Password Manager',
-      themeMode: ThemeMode.system,
-      theme: AppThemes.lightTheme,
-      darkTheme: AppThemes.darkTheme,
-      home: LoginScreen(secureStorage: secureStorage, hasPassword: hasLoginPass),
+    return ChangeNotifierProvider(
+      create:(context) => ThemeProvider(),
+      builder: (context, child) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+
+        return MaterialApp(
+        title: 'Password Manager',
+        themeMode: themeProvider.themeMode,
+        theme: AppThemes.lightTheme,
+        darkTheme: AppThemes.darkTheme,
+        home: LoginScreen(secureStorage: secureStorage, hasPassword: hasLoginPass),);
+      },
     );
   }
 }
@@ -269,22 +277,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                       showDialog(context: context, builder: (context) {
                                         return AlertDialog(
                                           title: const Text('Delete previous password?'),
-                                          content: Expanded(
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                ElevatedButton(onPressed: () {
+                                          content: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              ElevatedButton(onPressed: () {
+                                                Navigator.pop(context);
+                                              }, child: const Text('Back')),
+                                              ElevatedButton(onPressed: () {
+                                                setState(() {
+                                                  currPrevPass.removeAt((currPrevPass.length - 1) -index);
+                                                  addCard(currIndex, currPrevPass.toList(), !isModify);
                                                   Navigator.pop(context);
-                                                }, child: const Text('Back')),
-                                                ElevatedButton(onPressed: () {
-                                                  setState(() {
-                                                    currPrevPass.removeAt((currPrevPass.length - 1) -index);
-                                                    addCard(currIndex, currPrevPass.toList(), !isModify);
-                                                    Navigator.pop(context);
-                                                  });
-                                                }, child: const Text('Delete')),
-                                              ],
-                                            ),
+                                                });
+                                              }, child: const Text('Delete')),
+                                            ],
                                           ),
                                         );
                                       },);
@@ -338,10 +344,46 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(widget.title, style: Theme.of(context).textTheme.displayLarge,),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            child: MenuAnchor(builder: (context, controller, child) {
+              return IconButton(
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                icon: const Icon(Icons.dehaze),
+                tooltip: 'Show menu',
+              );
+            }, 
+            menuChildren: [
+              MenuItemButton(
+                child: const Text('Change master password'), 
+                onPressed: () {
+                
+                },),
+              SwitchListTile.adaptive(
+                title: Text('Dark mode:', style: Theme.of(context).textTheme.displayMedium,),
+                value: themeProvider.isDarkMode, 
+                onChanged: (value) {
+                  final provider = Provider.of<ThemeProvider>(context, listen: false);
+                  provider.toggleTheme(value);
+
+                },
+              )
+            ],),
+          )
+        ],
       ),
       body: ListView.builder(
         itemCount: database.length,
