@@ -70,12 +70,12 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            const Text('Login', textScaleFactor: 2,),
+            const Text('Login', textScaleFactor: 2),
             Flex(
               direction: Axis.horizontal,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Flexible(child: TextField(controller: loginPass,)),
+                Flexible(child: TextField(controller: loginPass, style: Theme.of(context).textTheme.displaySmall, obscureText: true,)),
                 TextButton(onPressed: () {
                   login(context);
                 }, child: Text(buttonName))

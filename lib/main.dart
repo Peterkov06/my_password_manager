@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:my_password_manager/AppThemes.dart';
 import 'ServiceCard.dart';
 import 'databaseBoxes.dart';
 import 'loginScreen.dart';
@@ -31,10 +32,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Password Manager',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
+      themeMode: ThemeMode.system,
+      theme: AppThemes.lightTheme,
+      darkTheme: AppThemes.darkTheme,
       home: LoginScreen(secureStorage: secureStorage, hasPassword: hasLoginPass),
     );
   }
@@ -148,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [Flexible(
                         child: TextField(
                           controller: currentNewService,
-                        decoration: const InputDecoration(hintText: 'Service name', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(label: Text('Service name'), border: OutlineInputBorder()),
                       ),
                       ),]
                     ),
@@ -160,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [Flexible(
                         child: TextField(
                           controller: currentNewUsername,
-                        decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(label: Text('Username'), border: OutlineInputBorder()),
                       ),
                       ),]
                     ),
@@ -171,8 +171,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       direction: Axis.horizontal,
                       children: [Flexible(
                         child: TextField(
+                          autocorrect: false,
+                          keyboardType: TextInputType.visiblePassword,
                           controller: currentNewPassword,
-                        decoration: const InputDecoration(hintText: 'Password', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(label: Text('Password'), border: OutlineInputBorder()),
                       ),
                       ),]
                     ),
@@ -227,7 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       alignment: Alignment.centerLeft,
                       child: const Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text('Previous password(s):', style: TextStyle(fontSize: 18),),
+                        child: Text('Previous password(s):', style: TextStyle(fontSize: 18, color: Colors.black),),
                       ),
                     ),
             
@@ -264,10 +266,28 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    setState(() {
-                                      currPrevPass.removeAt((currPrevPass.length - 1) -index);
-                                      addCard(currIndex, currPrevPass.toList(), !isModify);
-                                    },);
+                                      showDialog(context: context, builder: (context) {
+                                        return AlertDialog(
+                                          title: const Text('Delete previous password?'),
+                                          content: Expanded(
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                ElevatedButton(onPressed: () {
+                                                  Navigator.pop(context);
+                                                }, child: const Text('Back')),
+                                                ElevatedButton(onPressed: () {
+                                                  setState(() {
+                                                    currPrevPass.removeAt((currPrevPass.length - 1) -index);
+                                                    addCard(currIndex, currPrevPass.toList(), !isModify);
+                                                    Navigator.pop(context);
+                                                  });
+                                                }, child: const Text('Delete')),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },);
                                     },
                                   child: const Icon(Icons.delete),
                                 ),
@@ -320,8 +340,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(widget.title, style: Theme.of(context).textTheme.displayLarge,),
       ),
       body: ListView.builder(
         itemCount: database.length,
@@ -398,8 +418,8 @@ class _CardWidgetState extends State<CardWidget> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(currCard.serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left,),
-                      Text(currCard.userName, textScaleFactor: 1.1, textAlign: TextAlign.left,),
+                      Text(currCard.serviceName, textScaleFactor: 1.5, textAlign: TextAlign.left, style: Theme.of(context).textTheme.displayMedium,),
+                      Text(currCard.userName, textScaleFactor: 1.1, textAlign: TextAlign.left, style: Theme.of(context).textTheme.displayMedium,),
                     ],
                   ),
                 ),
@@ -435,7 +455,7 @@ class _CardWidgetState extends State<CardWidget> {
                     );
                     ScaffoldMessenger.of(context).showSnackBar(snackBar);
                   },
-                child: const Icon(Icons.copy),
+                child: const Icon(Icons.copy,),
                 ),
             ],
           ),
