@@ -51,6 +51,22 @@ class _LoginScreenState extends State<LoginScreen> {
     {
       toHomePage(cont);
     }
+    else if (!isAllowed && mounted)
+    {
+      showDialog(context: context, builder: (context) {
+          return AlertDialog(
+            title: const Text('Incorrect password!', textAlign: TextAlign.center,),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(onPressed: () {
+                  Navigator.pop(context);
+                }, child: const Text('Back')),
+              ],
+            ),
+          );
+        },);
+    }
     
   }
 

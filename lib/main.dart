@@ -7,6 +7,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:my_password_manager/AppThemes.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ServiceCard.dart';
 import 'databaseBoxes.dart';
 import 'loginScreen.dart';
@@ -20,20 +21,22 @@ void main() async{
   final FlutterSecureStorage secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions());
   Hive.registerAdapter(ServiceCardAdapter());
   database = await Hive.openBox('');
+  final SharedPreferences preferences = await SharedPreferences.getInstance();
 
-  runApp(MyApp(secureStorage: secureStorage, hasLoginPass: await secureStorage.containsKey(key: 'loginPass'),));
+  runApp(MyApp(secureStorage: secureStorage, hasLoginPass: await secureStorage.containsKey(key: 'loginPass'), prefs: preferences,));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.secureStorage, required this.hasLoginPass});
+  const MyApp({super.key, required this.secureStorage, required this.hasLoginPass, required this.prefs});
   final FlutterSecureStorage secureStorage;
+  final SharedPreferences prefs;
   final bool hasLoginPass;
   final bool isDarkTheme = false;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create:(context) => ThemeProvider(),
+      create:(context) => ThemeProvider(prefs, ThemeMode.system),
       builder: (context, child) {
         final themeProvider = Provider.of<ThemeProvider>(context);
 
@@ -51,7 +54,7 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title, required this.secureStorage});
   final String title;
-  final secureStorage;
+  final FlutterSecureStorage secureStorage;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState(secureStorage);
@@ -148,6 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
               content: Form(
                 child: 
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -193,32 +197,37 @@ class _MyHomePageState extends State<MyHomePage> {
                       direction: Axis.horizontal,
                       children: [Flexible(
                         child: Center(
-                          child: TextButton(
+                          child: ElevatedButton(
                             child: const Text('Generate password'),
                             onPressed: () {
-                              const String letters_lower = 'abcdefghijklmnopqrstuvwxyz';
-                              const String letters_Upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                              const String numbers = '123456789';
                               const String specials = "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/";
                               int length = Random().nextInt(3) + 15;
                               String genPass = '';
                               for (var i = 0; i < length; i++) {
-                                int type = Random().nextInt(3);
+                                int type = 0;
+                                if (i == 0)
+                                {
+                                  type = Random().nextInt(2);
+                                }
+                                else 
+                                {
+                                  type = Random().nextInt(3);
+                                }
                                 switch (type) {
                                   case 0:
                                     int loUp = Random().nextInt(2);
                                     switch (loUp)
                                     {
                                       case 0:
-                                        genPass += letters_lower[Random().nextInt(letters_lower.length)];
+                                        genPass += String.fromCharCode(Random().nextInt(26) + 97);
                                         break;
                                       case 1:
-                                        genPass += letters_Upper[Random().nextInt(letters_Upper.length)];
+                                        genPass += String.fromCharCode(Random().nextInt(26) + 65);
                                         break;
                                     }
                                     break;
                                   case 1:
-                                    genPass += numbers[Random().nextInt(numbers.length)];
+                                    genPass += String.fromCharCode(Random().nextInt(10) + 48);
                                     break;
                                   case 2:
                                     genPass += specials[Random().nextInt(specials.length)];
@@ -342,6 +351,72 @@ class _MyHomePageState extends State<MyHomePage> {
     ;
   }
 
+  void changeMasterPass(TextEditingController prevCont, TextEditingController newCont, TextEditingController newAgainCont) async{    
+    var currPass = await secureStorage.read(key: 'loginPass');
+    if (int.parse(prevCont.text.hashCode.toString()) == int.parse(currPass.toString()))
+    {
+      if (newCont.text == newAgainCont.text)
+      {
+        secureStorage.write(key: 'loginPass', value: newCont.text.hashCode.toString());
+        if (context.mounted)
+        {
+          showDialog(context: context, builder: (context) {
+          return AlertDialog(
+            title: const Text('New password set!', textAlign: TextAlign.center,),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                }, child: const Text('OK')),
+              ],
+            ),
+          );
+        },);
+        }  
+      }
+      else
+      {
+        if (context.mounted)
+        {
+          showDialog(context: context, builder: (context) {
+          return AlertDialog(
+            title: const Text('New paswords are not the same!', textAlign: TextAlign.center,),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(onPressed: () {
+                  Navigator.pop(context);
+                }, child: const Text('Back')),
+              ],
+            ),
+          );
+        },);
+        } 
+      }
+    }
+    else
+    {
+      if (context.mounted)
+      {
+        showDialog(context: context, builder: (context) {
+          return AlertDialog(
+            title: const Text('Current password incorrect!', textAlign: TextAlign.center,),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(onPressed: () {
+                  Navigator.pop(context);
+                }, child: const Text('Back')),
+              ],
+            ),
+          );
+        },);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -370,7 +445,74 @@ class _MyHomePageState extends State<MyHomePage> {
               MenuItemButton(
                 child: const Text('Change master password'), 
                 onPressed: () {
-                
+                  var prevCont = TextEditingController();
+                  var newCont = TextEditingController();
+                  var newAgainCont = TextEditingController();
+
+                  showDialog(context: context, builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Change master password'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: TextField(
+                                  controller: prevCont,
+                                  autocorrect: false,
+                                  obscureText: true,
+                                decoration: const InputDecoration(label: Text('Current password'), border: OutlineInputBorder()),
+                              ),
+                              ),]
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: TextField(
+                                  controller: newCont,
+                                  autocorrect: false,
+                                  obscureText: true,
+                                decoration: const InputDecoration(label: Text('New password'), border: OutlineInputBorder()),
+                              ),
+                              ),]
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: TextField(
+                                  controller: newAgainCont,
+                                  autocorrect: false,
+                                  obscureText: true,
+                                decoration: const InputDecoration(label: Text('New password again'), border: OutlineInputBorder()),
+                              ),
+                              ),]
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(onPressed: () {
+                                Navigator.pop(context);
+                              }, child: const Text('Back')),
+                              ElevatedButton(onPressed: () {
+                                changeMasterPass(prevCont, newCont, newAgainCont);
+                                setState(() {});
+                              }, child: const Text('Save')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },);
                 },),
               SwitchListTile.adaptive(
                 title: Text('Dark mode:', style: Theme.of(context).textTheme.displayMedium,),

@@ -20,13 +20,42 @@ class AppThemes
 
 class ThemeProvider extends ChangeNotifier
 {
-  ThemeMode themeMode = ThemeMode.dark;
+  late ThemeMode themeMode;
+  late SharedPreferences prefs;
+  static const THEME_KEY = 'theme_key';
 
   bool get isDarkMode => themeMode == ThemeMode.dark;
 
-  void toggleTheme(bool val)
+  ThemeProvider(SharedPreferences pref, ThemeMode device)
+  {
+    this.prefs = pref;
+
+    bool hasKey = prefs.containsKey(THEME_KEY);
+
+    if (hasKey)
+    {
+      switch (pref.getBool(THEME_KEY)) {
+        case true:
+          themeMode = ThemeMode.dark;
+          break;
+        case false:
+          themeMode = ThemeMode.light;
+          break;
+        default:
+          break;
+      }
+    }
+    else
+    {
+      prefs.setBool(THEME_KEY, true);
+      themeMode = device;
+    }
+  }
+
+  void toggleTheme(bool val) async
   {
     themeMode = val ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
+    prefs.setBool(THEME_KEY, val);
   }
 }
