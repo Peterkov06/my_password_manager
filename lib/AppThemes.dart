@@ -26,7 +26,7 @@ class ThemeProvider extends ChangeNotifier
 
   bool get isDarkMode => themeMode == ThemeMode.dark;
 
-  ThemeProvider(SharedPreferences pref, ThemeMode device)
+  ThemeProvider(SharedPreferences pref)
   {
     this.prefs = pref;
 
@@ -48,7 +48,7 @@ class ThemeProvider extends ChangeNotifier
     else
     {
       prefs.setBool(THEME_KEY, true);
-      themeMode = device;
+      themeMode = ThemeMode.dark;
     }
   }
 

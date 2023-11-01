@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create:(context) => ThemeProvider(prefs, ThemeMode.system),
+      create:(context) => ThemeProvider(prefs),
       builder: (context, child) {
         final themeProvider = Provider.of<ThemeProvider>(context);
 
@@ -123,11 +123,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void modifyCard(bool isModify, int currIndex)
   {
-    ServiceCard thisCard = database.get(currIndex);
+    late ServiceCard thisCard;
     List<String> currPrevPass;
     late String titleTxt;
     if (isModify)
     {
+      thisCard = database.get(currIndex);
       titleTxt = 'Modify service';
       currentNewService.text = thisCard.serviceName;
       currentNewPassword.text = thisCard.currentPassword;
@@ -355,7 +356,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var currPass = await secureStorage.read(key: 'loginPass');
     if (int.parse(prevCont.text.hashCode.toString()) == int.parse(currPass.toString()))
     {
-      if (newCont.text == newAgainCont.text)
+      if (newCont.text == newAgainCont.text && newCont.text != '' && newCont.text != prevCont.text)
       {
         secureStorage.write(key: 'loginPass', value: newCont.text.hashCode.toString());
         if (context.mounted)
@@ -376,33 +377,33 @@ class _MyHomePageState extends State<MyHomePage> {
         },);
         }  
       }
-      else
+      else if (mounted && newAgainCont.text != newCont.text)
       {
-        if (context.mounted)
-        {
-          showDialog(context: context, builder: (context) {
-          return AlertDialog(
-            title: const Text('New paswords are not the same!', textAlign: TextAlign.center,),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(onPressed: () {
-                  Navigator.pop(context);
-                }, child: const Text('Back')),
-              ],
-            ),
-          );
-        },);
-        } 
+        showError('New passwords are not the same!');
+      }
+      else if (mounted && newCont.text == '')
+      {
+        showError('New password is not set!');
+      }
+      else if (mounted && newCont.text == prevCont.text)
+      {
+        showError('New password is same as before!');
       }
     }
     else
     {
       if (context.mounted)
       {
-        showDialog(context: context, builder: (context) {
+        showError('Current password incorrect!');
+      }
+    }
+  }
+
+  void showError(String message)
+  {
+    showDialog(context: context, builder: (context) {
           return AlertDialog(
-            title: const Text('Current password incorrect!', textAlign: TextAlign.center,),
+            title: Text(message, textAlign: TextAlign.center,),
             content: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -413,8 +414,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           );
         },);
-      }
-    }
   }
 
   @override
