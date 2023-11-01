@@ -151,170 +151,185 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text(titleTxt),
               content: Form(
                 child: 
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Flex(
-                      direction: Axis.horizontal,
-                      children: [Flexible(
-                        child: TextField(
-                          controller: currentNewService,
-                        decoration: const InputDecoration(label: Text('Service name'), border: OutlineInputBorder()),
-                      ),
-                      ),]
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Flex(
-                      direction: Axis.horizontal,
-                      children: [Flexible(
-                        child: TextField(
-                          controller: currentNewUsername,
-                        decoration: const InputDecoration(label: Text('Username'), border: OutlineInputBorder()),
-                      ),
-                      ),]
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Flex(
-                      direction: Axis.horizontal,
-                      children: [Flexible(
-                        child: TextField(
-                          autocorrect: false,
-                          keyboardType: TextInputType.visiblePassword,
-                          controller: currentNewPassword,
-                        decoration: const InputDecoration(label: Text('Password'), border: OutlineInputBorder()),
-                      ),
-                      ),]
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Flex(
-                      direction: Axis.horizontal,
-                      children: [Flexible(
-                        child: Center(
-                          child: ElevatedButton(
-                            child: const Text('Generate password'),
-                            onPressed: () {
-                              const String specials = "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/";
-                              int length = Random().nextInt(3) + 15;
-                              String genPass = '';
-                              for (var i = 0; i < length; i++) {
-                                int type = 0;
-                                if (i == 0)
-                                {
-                                  type = Random().nextInt(2);
-                                }
-                                else 
-                                {
-                                  type = Random().nextInt(3);
-                                }
-                                switch (type) {
-                                  case 0:
-                                    int loUp = Random().nextInt(2);
-                                    switch (loUp)
-                                    {
-                                      case 0:
-                                        genPass += String.fromCharCode(Random().nextInt(26) + 97);
-                                        break;
-                                      case 1:
-                                        genPass += String.fromCharCode(Random().nextInt(26) + 65);
-                                        break;
-                                    }
-                                    break;
-                                  case 1:
-                                    genPass += String.fromCharCode(Random().nextInt(10) + 48);
-                                    break;
-                                  case 2:
-                                    genPass += specials[Random().nextInt(specials.length)];
-                                    break;
-                                }
-                              }
-                              currentNewPassword.text = genPass;
-                            },
-                            ),
-                        )
-                      ),]
-                    ),
-                  ),
-                  if (isModify)
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Previous password(s):', style: TextStyle(fontSize: 18, color: Colors.black),),
-                      ),
-                    ),
-            
-                  if (isModify && currPrevPass.isNotEmpty)
-                    Expanded(
+                Flex(
+                  direction: Axis.vertical,
+                  children: [Expanded(
+                    child: SingleChildScrollView(
                       child: SizedBox(
-                        width: double.maxFinite,
-                        height: double.maxFinite,
-                        child: ListView.builder(
-                          itemCount: currPrevPass.length,
-                          itemBuilder: (context, index) {
-                          return Padding(
+                        height: 550,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                          Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Flex(
                               direction: Axis.horizontal,
-                              children: [
-                                Flexible(
-                                  child: TextField(
-                                  readOnly: true,
-                                  controller: TextEditingController(text: currPrevPass[(currPrevPass.length - 1) - index]),
-                                  decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Clipboard.setData(ClipboardData(text: currPrevPass[(currPrevPass.length - 1) - index]));
-                                    const snackBar = SnackBar(
-                                      content: Text('Copied password!'),
-                                      duration: Duration(seconds: 1),
-                                      );
-                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                    },
-                                  child: const Icon(Icons.copy),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                      showDialog(context: context, builder: (context) {
-                                        return AlertDialog(
-                                          title: const Text('Delete previous password?'),
-                                          content: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              ElevatedButton(onPressed: () {
-                                                Navigator.pop(context);
-                                              }, child: const Text('Back')),
-                                              ElevatedButton(onPressed: () {
-                                                setState(() {
-                                                  currPrevPass.removeAt((currPrevPass.length - 1) -index);
-                                                  addCard(currIndex, currPrevPass.toList(), !isModify);
-                                                  Navigator.pop(context);
-                                                });
-                                              }, child: const Text('Delete')),
-                                            ],
-                                          ),
-                                        );
-                                      },);
-                                    },
-                                  child: const Icon(Icons.delete),
-                                ),
-                              ]
+                              children: [Flexible(
+                                child: TextField(
+                                  controller: currentNewService,
+                                decoration: const InputDecoration(label: Text('Service name'), border: OutlineInputBorder()),
+                              ),
+                              ),]
                             ),
-                          );
-                        },),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: TextField(
+                                  controller: currentNewUsername,
+                                decoration: const InputDecoration(label: Text('Username'), border: OutlineInputBorder()),
+                              ),
+                              ),]
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: TextField(
+                                  autocorrect: false,
+                                  keyboardType: TextInputType.visiblePassword,
+                                  controller: currentNewPassword,
+                                decoration: const InputDecoration(label: Text('Password'), border: OutlineInputBorder()),
+                              ),
+                              ),]
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Flex(
+                              direction: Axis.horizontal,
+                              children: [Flexible(
+                                child: Center(
+                                  child: ElevatedButton(
+                                    child: const Text('Generate password'),
+                                    onPressed: () {
+                                      const String specials = "~`!@#\$%^&*()_-+={[}]|\\:;\"'<,>.?/";
+                                      int length = Random().nextInt(3) + 15;
+                                      String genPass = '';
+                                      for (var i = 0; i < length; i++) {
+                                        int type = 0;
+                                        if (i == 0)
+                                        {
+                                          type = Random().nextInt(2);
+                                        }
+                                        else 
+                                        {
+                                          type = Random().nextInt(3);
+                                        }
+                                        switch (type) {
+                                          case 0:
+                                            int loUp = Random().nextInt(2);
+                                            switch (loUp)
+                                            {
+                                              case 0:
+                                                genPass += String.fromCharCode(Random().nextInt(26) + 97);
+                                                break;
+                                              case 1:
+                                                genPass += String.fromCharCode(Random().nextInt(26) + 65);
+                                                break;
+                                            }
+                                            break;
+                                          case 1:
+                                            genPass += String.fromCharCode(Random().nextInt(10) + 48);
+                                            break;
+                                          case 2:
+                                            genPass += specials[Random().nextInt(specials.length)];
+                                            break;
+                                        }
+                                      }
+                                      currentNewPassword.text = genPass;
+                                    },
+                                    ),
+                                )
+                              ),]
+                            ),
+                          ),
+                          if (isModify)
+                            Container(
+                              alignment: Alignment.centerLeft,
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text('Previous password(s):', style: TextStyle(fontSize: 18, color: Colors.black),),
+                              ),
+                            ),
+                                  
+                          if (isModify && currPrevPass.isNotEmpty)
+                            Expanded(
+                              child: Flex(
+                                direction: Axis.vertical,
+                                children: [Flexible(
+                                  child: SizedBox(
+                                    width: 300,
+                                    height: 900,
+                                    child: ListView.builder(
+                                      itemCount: currPrevPass.length,
+                                      itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Flex(
+                                          direction: Axis.horizontal,
+                                          children: [
+                                            Flexible(
+                                              child: TextField(
+                                              readOnly: true,
+                                              controller: TextEditingController(text: currPrevPass[(currPrevPass.length - 1) - index]),
+                                              decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(text: currPrevPass[(currPrevPass.length - 1) - index]));
+                                                const snackBar = SnackBar(
+                                                  content: Text('Copied password!'),
+                                                  duration: Duration(seconds: 1),
+                                                  );
+                                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                                },
+                                              child: const Icon(Icons.copy),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                  showDialog(context: context, builder: (context) {
+                                                    return AlertDialog(
+                                                      title: const Text('Delete previous password?'),
+                                                      content: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        children: [
+                                                          ElevatedButton(onPressed: () {
+                                                            Navigator.pop(context);
+                                                          }, child: const Text('Back')),
+                                                          ElevatedButton(onPressed: () {
+                                                            setState(() {
+                                                              currPrevPass.removeAt((currPrevPass.length - 1) -index);
+                                                              addCard(currIndex, currPrevPass.toList(), !isModify);
+                                                              Navigator.pop(context);
+                                                            });
+                                                          }, child: const Text('Delete')),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },);
+                                                },
+                                              child: const Icon(Icons.delete),
+                                            ),
+                                          ]
+                                        ),
+                                      );
+                                    },),
+                                  ),
+                                ),]
+                              ),
+                            )
+                                  
+                                    ],),
                       ),
-                    )
-            
-              ],)),
+                    ),
+                  ),]
+                )),
               actions: [
                 ElevatedButton(onPressed: () { 
                   if (!isModify)
