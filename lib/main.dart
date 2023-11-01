@@ -151,12 +151,12 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text(titleTxt),
               content: Form(
                 child: 
-                Flex(
-                  direction: Axis.vertical,
-                  children: [Expanded(
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [Flexible(
                     child: SingleChildScrollView(
-                      child: SizedBox(
-                        height: 550,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 200, maxHeight: double.infinity),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -258,71 +258,68 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                                   
                           if (isModify && currPrevPass.isNotEmpty)
-                            Expanded(
-                              child: Flex(
-                                direction: Axis.vertical,
-                                children: [Flexible(
-                                  child: SizedBox(
-                                    width: 300,
-                                    height: 900,
-                                    child: ListView.builder(
-                                      itemCount: currPrevPass.length,
-                                      itemBuilder: (context, index) {
-                                      return Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Flex(
-                                          direction: Axis.horizontal,
-                                          children: [
-                                            Flexible(
-                                              child: TextField(
-                                              readOnly: true,
-                                              controller: TextEditingController(text: currPrevPass[(currPrevPass.length - 1) - index]),
-                                              decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
-                                              ),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                Clipboard.setData(ClipboardData(text: currPrevPass[(currPrevPass.length - 1) - index]));
-                                                const snackBar = SnackBar(
-                                                  content: Text('Copied password!'),
-                                                  duration: Duration(seconds: 1),
-                                                  );
-                                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                                },
-                                              child: const Icon(Icons.copy),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                  showDialog(context: context, builder: (context) {
-                                                    return AlertDialog(
-                                                      title: const Text('Delete previous password?'),
-                                                      content: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                        children: [
-                                                          ElevatedButton(onPressed: () {
-                                                            Navigator.pop(context);
-                                                          }, child: const Text('Back')),
-                                                          ElevatedButton(onPressed: () {
-                                                            setState(() {
-                                                              currPrevPass.removeAt((currPrevPass.length - 1) -index);
-                                                              addCard(currIndex, currPrevPass.toList(), !isModify);
-                                                              Navigator.pop(context);
-                                                            });
-                                                          }, child: const Text('Delete')),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },);
-                                                },
-                                              child: const Icon(Icons.delete),
-                                            ),
-                                          ]
+                            SizedBox(
+                              width: 320,
+                              height: 80.0 * currPrevPass.length,
+                              child: ListView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: currPrevPass.length,
+                                itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Flex(
+                                    direction: Axis.horizontal,
+                                    children: [
+                                      Flexible(
+                                        child: TextField(
+                                        readOnly: true,
+                                        controller: TextEditingController(text: currPrevPass[(currPrevPass.length - 1) - index]),
+                                        decoration: const InputDecoration(hintText: 'Username', border: OutlineInputBorder()),
                                         ),
-                                      );
-                                    },),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Clipboard.setData(ClipboardData(text: currPrevPass[(currPrevPass.length - 1) - index]));
+                                          const snackBar = SnackBar(
+                                            content: Text('Copied password!'),
+                                            duration: Duration(seconds: 1),
+                                            );
+                                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                          },
+                                        child: const Icon(Icons.copy),
+                                      ),
+                                      TextButton(
+                                        style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll(Colors.red)),
+                                        onPressed: () {
+                                            showDialog(context: context, builder: (context) {
+                                              return AlertDialog(
+                                                title: const Text('Delete previous password?'),
+                                                content: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    ElevatedButton(onPressed: () {
+                                                      Navigator.pop(context);
+                                                    }, child: const Text('Back')),
+                                                    ElevatedButton(
+                                                      style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll(Colors.red), foregroundColor: MaterialStatePropertyAll(Colors.white)),
+                                                      onPressed: () {
+                                                      setState(() {
+                                                        currPrevPass.removeAt((currPrevPass.length - 1) -index);
+                                                        addCard(currIndex, currPrevPass.toList(), !isModify);
+                                                        Navigator.pop(context);
+                                                      });
+                                                    }, child: const Text('Delete')),
+                                                  ],
+                                                ),
+                                              );
+                                            },);
+                                          },
+                                        child: const Icon(Icons.delete, color: Colors.white),
+                                      ),
+                                    ]
                                   ),
-                                ),]
-                              ),
+                                );
+                              },),
                             )
                                   
                                     ],),
@@ -331,7 +328,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),]
                 )),
               actions: [
-                ElevatedButton(onPressed: () { 
+                ElevatedButton(
+                  style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.green), foregroundColor: MaterialStatePropertyAll(Colors.white)),
+                  onPressed: () { 
                   if (!isModify)
                   {
                     Navigator.pop(context, true); 
@@ -422,7 +421,8 @@ class _MyHomePageState extends State<MyHomePage> {
             content: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton(onPressed: () {
+                ElevatedButton(
+                  onPressed: () {
                   Navigator.pop(context);
                 }, child: const Text('Back')),
               ],
@@ -517,9 +517,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               ElevatedButton(onPressed: () {
                                 Navigator.pop(context);
                               }, child: const Text('Back')),
-                              ElevatedButton(onPressed: () {
+                              ElevatedButton(
+                                style: const ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.green), foregroundColor: MaterialStatePropertyAll(Colors.white)),
+                                onPressed: () {
                                 changeMasterPass(prevCont, newCont, newAgainCont);
-                                setState(() {});
                               }, child: const Text('Save')),
                             ],
                           ),

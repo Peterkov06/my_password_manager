@@ -28,7 +28,7 @@ class ThemeProvider extends ChangeNotifier
 
   ThemeProvider(SharedPreferences pref)
   {
-    this.prefs = pref;
+    prefs = pref;
 
     bool hasKey = prefs.containsKey(THEME_KEY);
 
